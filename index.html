@@ -1,0 +1,84 @@
+<html>
+    <head>
+        <title>A simple chat application</title>
+    <style>
+        #chat{
+            height : 500px;
+        }
+        #contentWrap{
+            display : none
+        }
+        #chatWrap{
+            float :left;
+            border: 1px #000 solid;
+        }
+    </style>
+    </head>
+    <body>
+        <div id="userNameWrap">
+            <h3>Enter your user name </h3>
+            <form id = "setUserName">
+                <input size='35' id="userName"></input>
+                <input type="submit"></input>
+            </form>
+        </div>
+        <div id = "contentWrap">
+            <div id = "chatWrap">
+                <div id = "chat"></div>
+                <form id = "sendMessege">
+                    <input size = '35' id="messege"></input>
+                    <input type ="submit" value="send"></input>
+                </form>
+            </div>
+            <div id = "users"></div>    
+        </div>
+        
+        <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            $(function($){
+                var socket = io.connect();
+                var messegeform = $('#sendMessege');
+                var messegeBox = $('#messege');
+                var chat = $('#chat');
+                var users = $('#users');
+                var userForm = $('#setUserName');
+                var userName = $('#userName');
+
+                //to accept the user name
+                userForm.submit(function(e){
+                    e.preventDefault();
+                    socket.emit('new user', userName.val(),function(data){
+                        if(data){
+                            $('#userNameWrap').hide();
+                            $('#contentWrap').show();
+                        }
+                    });
+                    userName.val('');
+                });
+                
+                socket.on('userNames',function(data){
+                   var html = '';
+                   for(i = 0; i <data.length; i++){
+                       html += data[i]+'<br/>';
+                   }
+                   users.html(html);
+                });
+
+                // to recieve the messege from the client and send it to server
+                messegeform.submit(function(e){
+                    e.preventDefault();
+                    socket.emit('send messege',messegeBox.val());
+                    messegeBox.val('');
+
+                });
+
+                
+                //to display the new messege that is received from other client
+                socket.on('new messege', function(data){
+                    chat.append('<b>'+ data.name+ ': </b>'+ data.msg +"<br/>");
+                })
+            })
+        </script>
+    </body>
+</html>
